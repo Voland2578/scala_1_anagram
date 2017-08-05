@@ -34,10 +34,24 @@ object Anagrams {
    *
    *  Note: you must use `groupBy` to implement this method!
    */
-  def wordOccurrences(w: Word): Occurrences = ???
+
+  //     assert(wordOccurrences("abcd") === List(('a', 1), ('b', 1), ('c', 1), ('d', 1)))
+  def wordOccurrences(w: Word): Occurrences = {
+    //var k =  Map [Char, Int] ().withDefaultValue(0)
+    // for each letter, examine whether the value is in the map and add 1
+    //var result = w.toLowerCase().foldLeft (k) ( (temp_result, nextChar) => temp_result + (nextChar -> (1+temp_result(nextChar))) ).toList
+
+    /// group by would create a mapping of each letter to string (which is just a duplicate of letters
+    // d -> ddd
+    val result = (w.toLowerCase() groupBy (x=>x) map { case (k,v) => (k, v.length ) }).toList
+    result sortWith ( _._1 < _._1)
+  }
 
   /** Converts a sentence into its character occurrence list. */
-  def sentenceOccurrences(s: Sentence): Occurrences = ???
+  // List[Word]
+  def sentenceOccurrences(s: Sentence): Occurrences = {
+    wordOccurrences ( s.mkString("") filter (_.isLetter) )
+  }
 
   /** The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
    *  the words that have that occurrence count.
