@@ -68,7 +68,11 @@ object Anagrams {
    *    List(('a', 1), ('e', 1), ('t', 1)) -> Seq("ate", "eat", "tea")
    *
    */
-  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = ???
+  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = {
+    val url = getClass().getResource("linuxwords.txt")
+    val allWords = scala.io.Source.fromFile(url.getFile).getLines().toList
+    allWords groupBy(x => wordOccurrences(x.toLowerCase))
+  }
 
   /** Returns all the anagrams of a given word. */
   def wordAnagrams(word: Word): List[Word] = ???
