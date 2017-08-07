@@ -71,12 +71,13 @@ object Anagrams {
   lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = {
     val url = getClass().getResource("linuxwords.txt")
     val allWords = scala.io.Source.fromFile(url.getFile).getLines().toList
-    allWords groupBy (x => wordOccurrences(x.toLowerCase))
+    (allWords groupBy (x => wordOccurrences(x.toLowerCase))).withDefaultValue(Nil)
+
   }
 
   /** Returns all the anagrams of a given word. */
   def wordAnagrams(word: Word): List[Word] = {
-    dictionaryByOccurrences ( wordOccurrences(word) )
+    dictionaryByOccurrences(wordOccurrences(word))
   }
 
   /** Returns the list of all subsets of the occurrence list.
@@ -122,11 +123,11 @@ object Anagrams {
         intermediate_list ::: xx ::: possiblePairsAsList
       }
       else {
-         possiblePairsAsList
+        possiblePairsAsList
       }
     }
-    List(Nil) ::: occurrences.foldLeft(List[List[(Char, Int)]]())((i, k) => processNextTuple(i, k))
 
+    List(Nil) ::: occurrences.foldLeft(List[List[(Char, Int)]]())((i, k) => processNextTuple(i, k))
 
 
   }
@@ -144,9 +145,9 @@ object Anagrams {
   def subtract(x: Occurrences, y: Occurrences): Occurrences = {
 
     val asMap = x.toMap
-    val m = y.foldLeft (asMap) ( ( currentMap, nextTuple) => currentMap updated ( nextTuple._1, (currentMap(nextTuple._1) - nextTuple._2 )))
+    val m = y.foldLeft(asMap)((currentMap, nextTuple) => currentMap updated(nextTuple._1, (currentMap(nextTuple._1) - nextTuple._2)))
     val q = m filter (x => x._2 != 0)
-    q.toList
+    q.toList.sortWith(_._1 < _._1)
   }
 
   /** Returns a list of all anagram sentences of the given sentence.
@@ -190,6 +191,31 @@ object Anagrams {
     * Note: There is only one anagram of an empty sentence.
     */
   def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
-      Nil
+
+    def anagrams(
+                  // words already determined
+                  processedWords: List[Word],
+                  remainingOccurancesComboList: List[Occurrences],
+                  remainingSentenceOccurances: Occurrences)
+    : List[List[Word]] = {
+      if (remainingOccurancesComboList.size == 1) List(processedWords)
+      else {
+        val xx = for {
+          x <- remainingOccurancesComboList
+          y: Word <- Anagrams.dictionaryByOccurrences(x)
+        }
+          yield {
+            // this is the remaining sentence
+            val subtr = Anagrams.subtract(remainingSentenceOccurances, x)
+            anagrams(y :: processedWords, Anagrams.combinations(subtr), subtr)
+          }
+        val q = xx filterNot (x => x.isEmpty)
+        q.flatten
+      }
+    }
+
+    var sOccurances = Anagrams.sentenceOccurrences(sentence)
+    val combinations = Anagrams.combinations(sOccurances)
+    anagrams(List[Word](), combinations, sOccurances sortWith ((_._1 < _._1)))
   }
 }
